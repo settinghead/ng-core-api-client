@@ -1,5 +1,4 @@
-# ng-core-api-client ![Build Status](http://devtools1.risevision.com:8080/job/Ng-Core-Api-Client-Master/badge/icon)
-
+# ng-core-api-client [![Build Status](https://travis-ci.org/Rise-Vision/ng-core-api-client.svg)](https://travis-ci.org/Rise-Vision/ng-core-api-client)
 ## Introduction
 
 An AngularJS-based client module that is responsible for making API calls to the [Rise Vision Core API](rise-vision.github.io/core-api).
