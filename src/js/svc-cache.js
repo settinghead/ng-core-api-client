@@ -2,7 +2,7 @@
 
   "use strict";
 
-  angular.module("risevision.common.cache", [])
+  angular.module("risevision.core.cache", [])
 
     .value("rvStorage", sessionStorage)
 

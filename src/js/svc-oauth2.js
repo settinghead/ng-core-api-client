@@ -2,7 +2,7 @@
 
   "use strict";
   angular.module("risevision.core.oauth2",
-  ["risevision.common.gapi", "risevision.common.cache"]).
+  ["risevision.common.gapi", "risevision.core.cache"]).
   factory("getOAuthUserInfo", ["oauth2APILoader", "$q", "userInfoCache",
   "$log",
   function (oauth2APILoader, $q, userInfoCache, $log) {

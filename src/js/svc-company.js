@@ -5,7 +5,7 @@
   angular.module("risevision.core.company",
     [
       "risevision.common.gapi",
-      "risevision.common.cache",
+      "risevision.core.cache",
       "risevision.core.util"
     ])
 
