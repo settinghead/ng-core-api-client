@@ -3,7 +3,7 @@
 
 describe("Services: cache", function() {
 
-  beforeEach(module("risevision.common.cache"));
+  beforeEach(module("risevision.core.cache"));
 
   it("should exist", function(done) {
     inject(function(userInfoCache) {
