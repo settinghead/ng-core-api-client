@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/Rise-Vision/ng-core-api-client/issues"
   },
-  "homepage": "https://github.com/Rise-Vision/ng-core-api-client"
+  "homepage": "https://github.com/Rise-Vision/ng-core-api-client",
+  "devDependencies": {
+    "gulp-jshint": "^1.8.5"
+  }
 }
