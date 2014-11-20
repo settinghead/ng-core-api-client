@@ -40,46 +40,45 @@ describe("Module: risevision.common.apis", function() {
         });
     }));
 
-    it("listApis should exist", function(done) {
-        inject(function (listApis) {
-            expect(listApis).be.defined;
-            done();
+    var listApis;
+    beforeEach(function(){
+        inject(function($injector){
+            listApis = $injector.get('listApis');
         });
+    });
+
+    it('should exist',function(){
+        expect(listApis).to.be.ok;
     });
 
     it("Should list all risevision apis", function(done) {
-        inject(function(listApis){
-            try {
-                var name = "";
-                var preferred = "";
-                listApis(name, preferred).then(function (result) {
-                    expect(result).to.deep.equal(rvFixtures.apis.items);
-                    done();
-                }, function (error) {
-                    throw error
-                });
-            } catch (x) {
-                done(x);
-            }
+        var name = "";
+        var preferred = "";
+        listApis(name, preferred).then(function (result) {
+            expect(result).to.deep.equal(rvFixtures.apis.items);
+            done();
+        }).then(null,done);
+    });
+
+    var getRest;
+    beforeEach(function(){
+        inject(function($injector){
+            getRest = $injector.get('getRest');
         });
     });
 
-    it("getRest should exist", function(done) {
-        inject(function (getRest) {
-            expect(getRest).be.defined;
-            done();
-        });
+    it('should exist',function(){
+        expect(getRest).to.be.ok;
     });
 
     it("Should retrieve the description of a particular version of an api.", function(done) {
-        inject(function(getRest){
-            var api = "core"
-            var version = "v0"
-            getRest(api,version).then(function(result){
-                expect(result).to.deep.equal(rvFixtures.api);
-                done();
-            }, function(error) {throw error});
-        });
+        var api = "core"
+        var version = "v0"
+        getRest(api,version).then(function(result){
+            expect(result).to.deep.equal(rvFixtures.api);
+            done();
+        }).then(null,done);
+
     });
 
 });
