@@ -11,11 +11,11 @@
   ],
   "dependencies": {
     "ng-gapi-loader": "git://github.com/Rise-Vision/ng-gapi-loader.git",
-    "angular": "1.2.24",
-    "angular-mocks": "1.2.24"
+    "angular": "1.2.24"
   },
   "devDependencies": {
-      "q": "1.0.1"
+      "q": "1.0.1",
+      "angular-mocks": "1.2.24"
   },
   "authors": [
     "Xiyang Chen <settinghead@gmail.com>"
