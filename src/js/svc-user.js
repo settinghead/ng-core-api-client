@@ -16,57 +16,52 @@
   })
 
   .factory("getUserProfile", ["oauth2APILoader", "coreAPILoader", "$q", "$log",
-  "getOAuthUserInfo", "userInfoCache",
-  function (oauth2APILoader, coreAPILoader, $q, $log, getOAuthUserInfo,
-    userInfoCache) {
+  "getOAuthUserInfo",
+  function (oauth2APILoader, coreAPILoader, $q, $log, getOAuthUserInfo) {
+    var _username;
+    var _deferred = null;
     return function (username, clearCache) {
-      var deferred = $q.defer();
+
+      if (username === _username && !clearCache && _deferred !== null) {
+        //avoid calling API if username didn't change
+        return _deferred.promise;
+      }
+
+      _username = username;
+      _deferred = $q.defer();
 
       if(!username) {
-        deferred.reject("getUserProfile failed: username param is required.");
+        _deferred.reject("getUserProfile failed: username param is required.");
         $log.debug("getUserProfile failed: username param is required.");
       }
       else {
 
-        //clear cache if instructed so
-        if(clearCache) {
-          userInfoCache.remove("profile-" + username);
-        }
-
         var criteria = {};
         if (username) {criteria.username = username; }
         $log.debug("getUserProfile called", criteria);
-        if(userInfoCache.get("profile-" +  username)) {
-          //skip if already exists
-          $log.debug("getUserProfile resp from cache", "profile-" + username, userInfoCache.get("profile-" + username));
-          deferred.resolve(userInfoCache.get("profile-" + username));
-        }
-        else {
-          $q.all([oauth2APILoader(), coreAPILoader()]).then(function (results){
-            var coreApi = results[1];
-            // var oauthUserInfo = results[2];
-            coreApi.user.get(criteria).execute(function (resp){
-              if (resp.error || !resp.result) {
-                deferred.reject(resp);
-              }
-              else {
-                $log.debug("getUser resp", resp);
-                  //get user profile
-                userInfoCache.put("profile-" + username, resp.item);
-                deferred.resolve(resp.item);
-              }
-            });
-          }, deferred.reject);
-        }
 
+        $q.all([oauth2APILoader(), coreAPILoader()]).then(function (results){
+          var coreApi = results[1];
+          // var oauthUserInfo = results[2];
+          coreApi.user.get(criteria).execute(function (resp){
+            if (resp.error || !resp.result) {
+              _deferred.reject(resp);
+            }
+            else {
+              $log.debug("getUser resp", resp);
+                //get user profile
+              _deferred.resolve(resp.item);
+            }
+          });
+        }, _deferred.reject);
       }
-      return deferred.promise;
+      return _deferred.promise;
     };
   }])
 
   .factory("updateUser", ["$q", "coreAPILoader", "$log",
-  "userInfoCache", "getUserProfile", "pick",
-  function ($q, coreAPILoader, $log, userInfoCache, getUserProfile, pick) {
+  "getUserProfile", "pick",
+  function ($q, coreAPILoader, $log, getUserProfile, pick) {
     return function (username, profile) {
       var deferred = $q.defer();
       profile = pick(profile, "mailSyncEnabled",
@@ -81,8 +76,7 @@
               deferred.reject(resp);
             }
             else if (resp.result) {
-              userInfoCache.remove("profile-" + username);
-              getUserProfile(username).then(function() {deferred.resolve(resp);});
+              getUserProfile(username, true).then(function() {deferred.resolve(resp);});
             }
             else {
               deferred.reject("updateUser");
@@ -98,8 +92,8 @@
     return function (companyId, username, profile) {
       var deferred = $q.defer();
       coreAPILoader().then(function (coreApi) {
-        profile = pick(profile, "firstName", "lastName",
-          "email", "telephone", "roles", "status");
+        profile = pick(profile, "mailSyncEnabled",
+          "email", "firstName", "lastName", "telephone", "roles", "status");
         var request = coreApi.user.add({
           username: username,
           companyId: companyId,
