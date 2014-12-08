@@ -2,8 +2,7 @@
 
   "use strict";
   angular.module("risevision.core.userprofile", [
-  "risevision.common.gapi", "risevision.core.oauth2",
-  "risevision.core.cache"])
+  "risevision.common.gapi", "risevision.core.oauth2"])
 
   .value("userRoleMap", {
     "ce": "Content Editor",
