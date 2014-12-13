@@ -10,7 +10,8 @@
     "api"
   ],
   "dependencies": {
-    "ng-gapi-loader": "git://github.com/Rise-Vision/ng-gapi-loader.git",
+    "ng-gapi-loader": "https://github.com/Rise-Vision/ng-gapi-loader.git",
+    "rv-gapi-mock":"https://github.com/Rise-Vision/gapi-mock.git",
     "angular": "1.2.24"
   },
   "devDependencies": {

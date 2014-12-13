@@ -8,20 +8,10 @@ describe("Services: Company Core API Service", function() {
     //stub services
     $provide.service("$q", function() {return Q;});
 
-    $provide.value("coreAPILoader", {get: function() {
-        var deffered = Q.defer();
+    $provide.factory("coreAPILoader", ["$q", function($q) {
+      return function () {
+        var deffered = $q.defer();
         var gapi = {
-          subcompanies: {
-            list: function () {
-              return {
-                execute: function (callback) {
-                  setTimeout(function () {
-                    callback(window.rvFixtures.companiesResp);
-                  }, 0);
-                }
-              };
-            }
-          },
           company: {
             updateAddress: function () {
               return {
@@ -31,27 +21,45 @@ describe("Services: Company Core API Service", function() {
                   }, 0);
                 }
               };
+            },
+            list: function (obj) {
+              return {
+                execute: function (callback) {
+                  var resp = {result: true, items: window.rvFixtures.companiesResp.items};
+                  if(obj.cursor) {
+                    resp.items = resp.items.splice(obj.cursor);
+                  }
+                  if(obj.count) {
+                    //simulate starvation
+                    resp.items = resp.items.slice(0, obj.count <= 7 ? obj.count : 7);
+                  }
+                  setTimeout(function () {
+                    callback(resp);
+                  }, 0);
+                }
+              };
             }
           }
         };
         deffered.resolve(gapi);
         return deffered.promise;
-    }});
+      };
+    }]);
     $provide.value("CORE_URL", "");
   }));
 
   it("should exist", function(done) {
     inject(function (companyService) {
-      expect(companyService).be.defined;
+      expect(companyService).to.be.ok;
       done();
     });
   });
 
-  xdescribe("getSubCompanies", function () {
+  describe("getCompanies", function () {
     it("should load subcompanies", function (done) {
       inject(function (companyService) {
-        companyService.getSubCompanies(2, "", "", 20, null).then(function (result) {
-          expect(result).to.deep.equal(rvFixtures.companiesResp);
+        companyService.getCompanies(2, "john smith", "", 20, null).then(function (result) {
+          expect(result.items.length).to.equal(7);
           done();
         }, function (err) {throw err; });
       });
@@ -107,7 +115,6 @@ describe("Services: Company Core API Service", function() {
         done();
       });
     });
-
   });
 
 });

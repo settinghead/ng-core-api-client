@@ -183,29 +183,99 @@
     .service("companyService", ["coreAPILoader", "$q", "$log", "getCompany",
       function (coreAPILoader, $q, $log, getCompany) {
 
-      this.getCompanies = function (companyId, search, cursor, count, sort) {
-        var deferred = $q.defer();
-        var obj = {
-          "companyId": companyId,
-          "search": search,
-          "cursor": cursor,
-          "count": count,
-          "sort": sort
+      var compartmentalizeSearchString = function (query) {
+        var fields = ["name", "fullAddress", ""];
+
+        var applyFieldNameToQuery = function (fieldName) {
+          var prefixQueryWordWithFieldName = function (queryWord) {
+            //e.g. "john" => "name:john"
+            if(queryWord.indexOf(":") >= 0) { //already has a field
+              return queryWord;
+            }
+            else {
+              var prefix = fieldName ? fieldName + ":" : "";
+              var vs = queryWord.split(":");
+              return prefix + vs[vs.length - 1];
+            }
+          };
+          return query
+            //break apart into segments
+            .split(" ")
+            .map(prefixQueryWordWithFieldName)
+            //re-concatenate queries
+            .join(" ");
         };
-        $log.debug("getCompanies called with", obj);
-        coreAPILoader().then(function (coreApi) {
-          var request = coreApi.company.list(obj);
-          request.execute(function (resp) {
-              $log.debug("getCompanies resp", resp);
-              deferred.resolve(resp);
-          });
-        });
+
+        return fields.map(applyFieldNameToQuery);
+      };
+
+      this.getCompanies = function (companyId, search, cursor, pageSize, sort) {
+
+        var strings = compartmentalizeSearchString(search);
+        var deferred = $q.defer();
+        // var cursors = [];
+
+        var queryFunctionGenerator = function (query) {
+          return function (pageSize) {
+            var deferred = $q.defer();
+            var obj = {
+              "companyId": companyId,
+              "search": query,
+              "cursor": cursor,
+              "count": pageSize,
+              "sort": sort
+            };
+            coreAPILoader().then(function (coreApi) {
+              var request = coreApi.company.list(obj);
+              $log.debug("core.company called with", obj);
+              request.execute(function (resp) {
+                $log.debug("getCompanies resp", resp);
+                deferred.resolve(resp);
+              });
+            });
+            return deferred.promise;
+          };
+        };
+
+        var concatResp = function (resp1, resp2) {
+          return { items: (resp1.items || []).concat((resp2.items || []).filter(function (item2) {
+            return !resp1.items.some(function (item1) {
+              return item1.name === item2.name;
+            });
+          })) };
+        };
+
+        var initD = $q.defer(); initD.resolve({items: []});
+
+        //reference: https://github.com/kriskowal/q#sequences
+        strings.map(queryFunctionGenerator)
+          .reduce(function (respSoFar, f) {
+              // collect the rest
+              var d = $q.defer();
+              respSoFar.then(function (v) {
+                var lenSoFar = v.items.length;
+                if(lenSoFar === pageSize) { //page is full; skipping
+                  d.resolve(v);
+                }
+                else {
+                  f(pageSize - lenSoFar).then(function resolveConcacted (resp) {
+                    d.resolve(concatResp(v, resp));
+                  }, d.reject);
+                }
+              }, d.reject);
+              return d.promise;
+            //init item
+          }, initD.promise)
+          //return them aggregated results
+          .then(deferred.resolve);
+
         return deferred.promise;
       };
 
       this.loadSelectedCompany = function (selectedCompanyId, userCompany) {
           //this funtion assumes user and user.company are loaded
           var deferred = $q.defer();
+
           if (selectedCompanyId && selectedCompanyId !== userCompany.id) {
               getCompany(selectedCompanyId).then(function(res) {
                   if (res.code === 0 && res.item) {
